@@ -1,5 +1,7 @@
 import subprocess
 
+addresses = ["192.168.0.1", "8.8.8.8", "192.0.2.1"]
+
 
 def is_reachable(address: str) -> bool:
 
@@ -8,4 +10,8 @@ def is_reachable(address: str) -> bool:
     return result.returncode == 0
 
 
-print(is_reachable("192.168.0.1"))
+for address in addresses:
+    if is_reachable(address):
+        print(f"{address} is reachable")
+    else:
+        print(f"{address} is unreachable")
