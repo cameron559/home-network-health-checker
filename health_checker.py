@@ -21,7 +21,9 @@ def log_health_check(address: str, status: str) -> None:
         file.write(f"{timestamp} | {address} | {status}\n")
 
 
-def log_summary(reachable: int, unreachable: int, total: int) -> None:
+def log_summary(
+    reachable: int, unreachable: int, total: int, percentage: float
+) -> None:
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     with open("health_checks.log", "a") as file:
@@ -29,7 +31,8 @@ def log_summary(reachable: int, unreachable: int, total: int) -> None:
             f"{timestamp} | Summary | "
             f"Reachable: {reachable} | "
             f"Unreachable: {unreachable} | "
-            f"Total: {total}\n"
+            f"Total: {total} | "
+            f"Reachable percentage: {percentage:.1f}%\n"
         )
 
 
@@ -44,6 +47,9 @@ for address in addresses:
         reachable_addresses += 1
 
 unreachable_addresses = len(addresses) - reachable_addresses
+reachable_percentage = (reachable_addresses / len(addresses)) * 100
 
 
-log_summary(reachable_addresses, unreachable_addresses, len(addresses))
+log_summary(
+    reachable_addresses, unreachable_addresses, len(addresses), reachable_percentage
+)
