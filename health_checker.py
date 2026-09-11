@@ -36,6 +36,10 @@ def log_summary(
         )
 
 
+if not addresses:
+    print("No hosts configured.")
+    raise SystemExit
+
 for name, address in addresses.items():
     reachable = is_reachable(address)
     status = "reachable" if reachable else "unreachable"
