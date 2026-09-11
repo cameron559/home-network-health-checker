@@ -1,7 +1,7 @@
 import subprocess
 from datetime import datetime
 
-addresses = ["192.168.0.1", "8.8.8.8", "192.0.2.1"]
+addresses = {"Router": "192.168.0.1", "Google DNS": "8.8.8.8", "Test Host": "192.0.2.1"}
 
 
 def is_reachable(address: str) -> bool:
@@ -14,11 +14,11 @@ def is_reachable(address: str) -> bool:
 reachable_addresses = 0
 
 
-def log_health_check(address: str, status: str) -> None:
+def log_health_check(name: str, address: str, status: str) -> None:
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     with open("health_checks.log", "a") as file:
-        file.write(f"{timestamp} | {address} | {status}\n")
+        file.write(f"{timestamp} | {name} | {address} | {status}\n")
 
 
 def log_summary(
@@ -36,12 +36,12 @@ def log_summary(
         )
 
 
-for address in addresses:
+for name, address in addresses.items():
     reachable = is_reachable(address)
     status = "reachable" if reachable else "unreachable"
 
-    print(f"{address} is {status}.")
-    log_health_check(address, status)
+    print(f"{name} ({address}) is {status}")
+    log_health_check(name, address, status)
 
     if reachable:
         reachable_addresses += 1
