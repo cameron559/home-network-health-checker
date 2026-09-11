@@ -5,13 +5,13 @@ addresses = {"Router": "192.168.0.1", "Google DNS": "8.8.8.8", "Test Host": "192
 
 
 def is_reachable(address: str) -> bool:
+    try:
+        result = subprocess.run(["ping", "-n", "1", address], capture_output=True)
 
-    result = subprocess.run(["ping", "-n", "1", address], capture_output=True)
+        return result.returncode == 0
 
-    return result.returncode == 0
-
-
-reachable_addresses = 0
+    except OSError:
+        return False
 
 
 def log_health_check(name: str, address: str, status: str) -> None:
@@ -39,6 +39,8 @@ def log_summary(
 if not addresses:
     print("No hosts configured.")
     raise SystemExit
+
+reachable_addresses = 0
 
 for name, address in addresses.items():
     reachable = is_reachable(address)
