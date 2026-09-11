@@ -1,7 +1,11 @@
 import subprocess
+import json
 from datetime import datetime
 
-addresses = {"Router": "192.168.0.1", "Google DNS": "8.8.8.8", "Test Host": "192.0.2.1"}
+with open("config.json", "r") as file:
+    config = json.load(file)
+
+addresses = config["hosts"]
 
 
 def is_reachable(address: str) -> bool:
