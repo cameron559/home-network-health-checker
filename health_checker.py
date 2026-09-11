@@ -21,6 +21,18 @@ def log_health_check(address: str, status: str) -> None:
         file.write(f"{timestamp} | {address} | {status}\n")
 
 
+def log_summary(reachable: int, unreachable: int, total: int) -> None:
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    with open("health_checks.log", "a") as file:
+        file.write(
+            f"{timestamp} | Summary | "
+            f"Reachable: {reachable} | "
+            f"Unreachable: {unreachable} | "
+            f"Total: {total}\n"
+        )
+
+
 for address in addresses:
     reachable = is_reachable(address)
     status = "reachable" if reachable else "unreachable"
@@ -34,6 +46,4 @@ for address in addresses:
 unreachable_addresses = len(addresses) - reachable_addresses
 
 
-print(f"Reachable: {reachable_addresses}")
-print(f"Unreachable: {unreachable_addresses}")
-print(f"Total: {len(addresses)}")
+log_summary(reachable_addresses, unreachable_addresses, len(addresses))
