@@ -31,5 +31,9 @@ for address in addresses:
     if reachable:
         reachable_addresses += 1
 
+unreachable_addresses = len(addresses) - reachable_addresses
 
-print(f"Summary: {reachable_addresses}/{len(addresses)} hosts reachable.")
+
+print(f"Reachable: {reachable_addresses}")
+print(f"Unreachable: {unreachable_addresses}")
+print(f"Total: {len(addresses)}")
