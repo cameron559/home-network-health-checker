@@ -2,10 +2,23 @@ import subprocess
 import json
 from datetime import datetime
 
-with open("config.json", "r") as file:
-    config = json.load(file)
+try:
+    with open("config.json", "r") as file:
+        config = json.load(file)
 
-addresses = config["hosts"]
+    addresses = config["hosts"]
+
+except FileNotFoundError:
+    print("Error: config.json was not found.")
+    raise SystemExit
+
+except json.JSONDecodeError:
+    print("Error: config.json contains invalid JSON.")
+    raise SystemExit
+
+except KeyError:
+    print("Error: config.json is missing the hosts section.")
+    raise SystemExit
 
 
 def is_reachable(address: str) -> bool:
