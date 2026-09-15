@@ -23,7 +23,9 @@ except KeyError:
 
 def is_reachable(address: str) -> bool:
     try:
-        result = subprocess.run(["ping", "-n", "1", address], capture_output=True)
+        result = subprocess.run(
+            ["ping", "-n", "1", "-w", "1000", address], capture_output=True
+        )
 
         return result.returncode == 0
 
