@@ -83,3 +83,6 @@ print(f"Reachable percentage: {reachable_percentage:.1f}%")
 log_summary(
     reachable_addresses, unreachable_addresses, len(addresses), reachable_percentage
 )
+
+if unreachable_addresses > 0:
+    raise SystemExit(1)
