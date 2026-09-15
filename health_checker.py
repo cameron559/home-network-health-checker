@@ -78,11 +78,17 @@ for name, address in addresses.items():
 unreachable_addresses = len(addresses) - reachable_addresses
 reachable_percentage = (reachable_addresses / len(addresses)) * 100
 
+if not unreachable_addresses:
+    overall_status = "HEALTHY"
+else:
+    overall_status = "DEGRADED"
+
 print("Summary:")
 print(f"Reachable: {reachable_addresses}")
 print(f"Unreachable: {unreachable_addresses}")
 print(f"Total: {len(addresses)}")
 print(f"Reachable percentage: {reachable_percentage:.1f}%")
+print(f"Overall status: {overall_status}")
 
 log_summary(
     reachable_addresses, unreachable_addresses, len(addresses), reachable_percentage
