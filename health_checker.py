@@ -1,35 +1,98 @@
 import subprocess
+import json
 from datetime import datetime
 
-addresses = ["192.168.0.1", "8.8.8.8", "192.0.2.1"]
+try:
+    with open("config.json", "r") as file:
+        config = json.load(file)
+
+    addresses = config["hosts"]
+
+    if not isinstance(addresses, dict):
+        print("Error: hosts must be a dictionary.")
+        raise SystemExit(1)
+
+except FileNotFoundError:
+    print("Error: config.json was not found.")
+    raise SystemExit(1)
+
+except json.JSONDecodeError:
+    print("Error: config.json contains invalid JSON.")
+    raise SystemExit(1)
+
+except KeyError:
+    print("Error: config.json is missing the hosts section.")
+    raise SystemExit(1)
 
 
 def is_reachable(address: str) -> bool:
+    try:
+        result = subprocess.run(
+            ["ping", "-n", "1", "-w", "1000", address], capture_output=True
+        )
 
-    result = subprocess.run(["ping", "-n", "1", address], capture_output=True)
+        return result.returncode == 0
 
-    return result.returncode == 0
-
-
-reachable_addresses = 0
+    except OSError:
+        return False
 
 
-def log_health_check(address: str, status: str) -> None:
+def log_health_check(name: str, address: str, status: str) -> None:
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     with open("health_checks.log", "a") as file:
-        file.write(f"{timestamp} | {address} | {status}\n")
+        file.write(f"{timestamp} | {name} | {address} | {status}\n")
 
 
-for address in addresses:
+def log_summary(
+    reachable: int, unreachable: int, total: int, percentage: float
+) -> None:
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    with open("health_checks.log", "a") as file:
+        file.write(
+            f"{timestamp} | Summary | "
+            f"Reachable: {reachable} | "
+            f"Unreachable: {unreachable} | "
+            f"Total: {total} | "
+            f"Reachable percentage: {percentage:.1f}%\n"
+        )
+
+
+if not addresses:
+    print("No hosts configured.")
+    raise SystemExit(1)
+
+reachable_addresses = 0
+
+for name, address in addresses.items():
     reachable = is_reachable(address)
     status = "reachable" if reachable else "unreachable"
 
-    print(f"{address} is {status}.")
-    log_health_check(address, status)
+    print(f"{name} ({address}) is {status}")
+    log_health_check(name, address, status)
 
     if reachable:
         reachable_addresses += 1
 
+unreachable_addresses = len(addresses) - reachable_addresses
+reachable_percentage = (reachable_addresses / len(addresses)) * 100
 
-print(f"Summary: {reachable_addresses}/{len(addresses)} hosts reachable.")
+if not unreachable_addresses:
+    overall_status = "HEALTHY"
+else:
+    overall_status = "DEGRADED"
+
+print("Summary:")
+print(f"Reachable: {reachable_addresses}")
+print(f"Unreachable: {unreachable_addresses}")
+print(f"Total: {len(addresses)}")
+print(f"Reachable percentage: {reachable_percentage:.1f}%")
+print(f"Overall status: {overall_status}")
+
+log_summary(
+    reachable_addresses, unreachable_addresses, len(addresses), reachable_percentage
+)
+
+if unreachable_addresses > 0:
+    raise SystemExit(1)
