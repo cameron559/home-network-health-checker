@@ -8,17 +8,21 @@ try:
 
     addresses = config["hosts"]
 
+    if not isinstance(addresses, dict):
+        print("Error: hosts must be a dictionary.")
+        raise SystemExit(1)
+
 except FileNotFoundError:
     print("Error: config.json was not found.")
-    raise SystemExit
+    raise SystemExit(1)
 
 except json.JSONDecodeError:
     print("Error: config.json contains invalid JSON.")
-    raise SystemExit
+    raise SystemExit(1)
 
 except KeyError:
     print("Error: config.json is missing the hosts section.")
-    raise SystemExit
+    raise SystemExit(1)
 
 
 def is_reachable(address: str) -> bool:
@@ -57,7 +61,7 @@ def log_summary(
 
 if not addresses:
     print("No hosts configured.")
-    raise SystemExit
+    raise SystemExit(1)
 
 reachable_addresses = 0
 
