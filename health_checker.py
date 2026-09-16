@@ -83,6 +83,74 @@ if not unreachable_addresses:
 else:
     overall_status = "DEGRADED"
 
+
+def get_unreachable_hosts(hosts: dict) -> list:
+    unreachable_hosts = []
+    for host, status in hosts.items():
+        if not status:
+            unreachable_hosts.append(host)
+    return unreachable_hosts
+
+
+def get_reachable_hosts(hosts: dict) -> list:
+    reachable_hosts = []
+    for host, status in hosts.items():
+        if status:
+            reachable_hosts.append(host)
+    return reachable_hosts
+
+
+def get_status_counts(hosts: dict) -> dict:
+    reachable_count = 0
+    unreachable_count = 0
+    for status in hosts.values():
+        if not status:
+            unreachable_count += 1
+        else:
+            reachable_count += 1
+    return {"reachable": reachable_count, "unreachable": unreachable_count}
+
+
+def get_health_percentage(hosts: dict) -> float:
+    reachable_hosts = 0
+    if not hosts:
+        return 0.0
+    for status in hosts.values():
+        if status:
+            reachable_hosts += 1
+    return round(reachable_hosts / len(hosts) * 100, 1)
+
+
+def get_health_status(hosts: dict) -> str:
+    health_percentage = get_health_percentage(hosts)
+    if health_percentage >= 80:
+        return "Healthy"
+    elif 50 <= health_percentage <= 79.9:
+        return "Degraded"
+    else:
+        return "Critical"
+
+
+def has_failures(hosts: dict) -> bool:
+    for status in hosts.values():
+        if not status:
+            return True
+    return False
+
+
+def format_health_summary(hosts: dict) -> str:
+    health_status = get_health_status(hosts)
+    status_counts = get_status_counts(hosts)
+    availability = get_health_percentage(hosts)
+
+    return (
+        f"Health: {health_status} | "
+        f"Reachable: {status_counts['reachable']} | "
+        f"Unreachable: {status_counts['unreachable']} | "
+        f"Availability: {availability}%"
+    )
+
+
 print("Summary:")
 print(f"Reachable: {reachable_addresses}")
 print(f"Unreachable: {unreachable_addresses}")
