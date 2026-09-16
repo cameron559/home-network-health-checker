@@ -2,6 +2,7 @@ import subprocess
 import json
 from datetime import datetime
 
+
 try:
     with open("config.json", "r") as file:
         config = json.load(file)
@@ -83,12 +84,56 @@ if not unreachable_addresses:
 else:
     overall_status = "DEGRADED"
 
-print("Summary:")
-print(f"Reachable: {reachable_addresses}")
-print(f"Unreachable: {unreachable_addresses}")
-print(f"Total: {len(addresses)}")
-print(f"Reachable percentage: {reachable_percentage:.1f}%")
-print(f"Overall status: {overall_status}")
+
+def get_unreachable_hosts(hosts: dict) -> list:
+    return [host for host, status in hosts.items() if not status]
+
+
+def get_reachable_hosts(hosts: dict) -> list:
+    return [host for host, status in hosts.items() if status]
+
+
+def get_status_counts(hosts: dict) -> dict:
+    reachable_count = sum(hosts.values())
+    unreachable_count = len(hosts) - reachable_count
+    return {"reachable": reachable_count, "unreachable": unreachable_count}
+
+
+def get_health_percentage(hosts: dict) -> float:
+    if not hosts:
+        return 0.0
+    reachable_hosts = sum(hosts.values())
+    return round(reachable_hosts / len(hosts) * 100, 1)
+
+
+def get_health_status(hosts: dict) -> str:
+    health_percentage = get_health_percentage(hosts)
+
+    if health_percentage >= 80:
+        return "Healthy"
+
+    if health_percentage >= 50:
+        return "Degraded"
+
+    return "Critical"
+
+
+def has_failures(hosts: dict) -> bool:
+    return not all(hosts.values())
+
+
+def format_health_summary(hosts: dict) -> str:
+    health_status = get_health_status(hosts)
+    status_counts = get_status_counts(hosts)
+    availability = get_health_percentage(hosts)
+
+    return (
+        f"Health: {health_status} | "
+        f"Reachable: {status_counts['reachable']} | "
+        f"Unreachable: {status_counts['unreachable']} | "
+        f"Availability: {availability}%"
+    )
+
 
 log_summary(
     reachable_addresses, unreachable_addresses, len(addresses), reachable_percentage
