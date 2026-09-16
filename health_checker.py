@@ -2,6 +2,7 @@ import subprocess
 import json
 from datetime import datetime
 
+
 try:
     with open("config.json", "r") as file:
         config = json.load(file)
@@ -85,57 +86,40 @@ else:
 
 
 def get_unreachable_hosts(hosts: dict) -> list:
-    unreachable_hosts = []
-    for host, status in hosts.items():
-        if not status:
-            unreachable_hosts.append(host)
-    return unreachable_hosts
+    return [host for host, status in hosts.items() if not status]
 
 
 def get_reachable_hosts(hosts: dict) -> list:
-    reachable_hosts = []
-    for host, status in hosts.items():
-        if status:
-            reachable_hosts.append(host)
-    return reachable_hosts
+    return [host for host, status in hosts.items() if status]
 
 
 def get_status_counts(hosts: dict) -> dict:
-    reachable_count = 0
-    unreachable_count = 0
-    for status in hosts.values():
-        if not status:
-            unreachable_count += 1
-        else:
-            reachable_count += 1
+    reachable_count = sum(hosts.values())
+    unreachable_count = len(hosts) - reachable_count
     return {"reachable": reachable_count, "unreachable": unreachable_count}
 
 
 def get_health_percentage(hosts: dict) -> float:
-    reachable_hosts = 0
     if not hosts:
         return 0.0
-    for status in hosts.values():
-        if status:
-            reachable_hosts += 1
+    reachable_hosts = sum(hosts.values())
     return round(reachable_hosts / len(hosts) * 100, 1)
 
 
 def get_health_status(hosts: dict) -> str:
     health_percentage = get_health_percentage(hosts)
+
     if health_percentage >= 80:
         return "Healthy"
-    elif 50 <= health_percentage <= 79.9:
+
+    if health_percentage >= 50:
         return "Degraded"
-    else:
-        return "Critical"
+
+    return "Critical"
 
 
 def has_failures(hosts: dict) -> bool:
-    for status in hosts.values():
-        if not status:
-            return True
-    return False
+    return not all(hosts.values())
 
 
 def format_health_summary(hosts: dict) -> str:
@@ -150,13 +134,6 @@ def format_health_summary(hosts: dict) -> str:
         f"Availability: {availability}%"
     )
 
-
-print("Summary:")
-print(f"Reachable: {reachable_addresses}")
-print(f"Unreachable: {unreachable_addresses}")
-print(f"Total: {len(addresses)}")
-print(f"Reachable percentage: {reachable_percentage:.1f}%")
-print(f"Overall status: {overall_status}")
 
 log_summary(
     reachable_addresses, unreachable_addresses, len(addresses), reachable_percentage
