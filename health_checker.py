@@ -3,29 +3,6 @@ import json
 from datetime import datetime
 
 
-try:
-    with open("config.json", "r") as file:
-        config = json.load(file)
-
-    addresses = config["hosts"]
-
-    if not isinstance(addresses, dict):
-        print("Error: hosts must be a dictionary.")
-        raise SystemExit(1)
-
-except FileNotFoundError:
-    print("Error: config.json was not found.")
-    raise SystemExit(1)
-
-except json.JSONDecodeError:
-    print("Error: config.json contains invalid JSON.")
-    raise SystemExit(1)
-
-except KeyError:
-    print("Error: config.json is missing the hosts section.")
-    raise SystemExit(1)
-
-
 def is_reachable(address: str) -> bool:
     try:
         result = subprocess.run(
@@ -58,31 +35,6 @@ def log_summary(
             f"Total: {total} | "
             f"Reachable percentage: {percentage:.1f}%\n"
         )
-
-
-if not addresses:
-    print("No hosts configured.")
-    raise SystemExit(1)
-
-reachable_addresses = 0
-
-for name, address in addresses.items():
-    reachable = is_reachable(address)
-    status = "reachable" if reachable else "unreachable"
-
-    print(f"{name} ({address}) is {status}")
-    log_health_check(name, address, status)
-
-    if reachable:
-        reachable_addresses += 1
-
-unreachable_addresses = len(addresses) - reachable_addresses
-reachable_percentage = (reachable_addresses / len(addresses)) * 100
-
-if not unreachable_addresses:
-    overall_status = "HEALTHY"
-else:
-    overall_status = "DEGRADED"
 
 
 def get_unreachable_hosts(hosts: dict) -> list:
@@ -135,9 +87,73 @@ def format_health_summary(hosts: dict) -> str:
     )
 
 
-log_summary(
-    reachable_addresses, unreachable_addresses, len(addresses), reachable_percentage
-)
+def load_hosts() -> dict:
+    try:
+        with open("config.json", "r") as file:
+            config = json.load(file)
 
-if unreachable_addresses > 0:
-    raise SystemExit(1)
+        hosts = config["hosts"]
+
+        if not isinstance(hosts, dict):
+            print("Error: hosts must be a dictionary.")
+            raise SystemExit(1)
+
+    except FileNotFoundError:
+        print("Error: config.json was not found.")
+        raise SystemExit(1)
+
+    except json.JSONDecodeError:
+        print("Error: config.json contains invalid JSON.")
+        raise SystemExit(1)
+
+    except KeyError:
+        print("Error: config.json is missing the hosts section.")
+        raise SystemExit(1)
+
+    if not hosts:
+        print("No hosts configured.")
+        raise SystemExit(1)
+
+    return hosts
+
+
+def main() -> None:
+    hosts = load_hosts()
+    host_statuses = {}
+
+    for name, address in hosts.items():
+        reachable = is_reachable(address)
+        status = "reachable" if reachable else "unreachable"
+
+        host_statuses[name] = reachable
+
+        print(f"{name} ({address}) is {status}")
+        log_health_check(name, address, status)
+
+    status_counts = get_status_counts(host_statuses)
+
+    reachable_percentage = get_health_percentage(host_statuses)
+
+    log_summary(
+        status_counts["reachable"],
+        status_counts["unreachable"],
+        len(host_statuses),
+        reachable_percentage,
+    )
+
+    print(format_health_summary(host_statuses))
+    unreachable_hosts = get_unreachable_hosts(host_statuses)
+    reachable_hosts = get_reachable_hosts(host_statuses)
+
+    if unreachable_hosts:
+        print(f"Unreachable hosts: {', '.join(unreachable_hosts)}")
+
+    if reachable_hosts:
+        print(f"Reachable hosts: {', '.join(reachable_hosts)}")
+
+    if has_failures(host_statuses):
+        raise SystemExit(1)
+
+
+if __name__ == "__main__":
+    main()
