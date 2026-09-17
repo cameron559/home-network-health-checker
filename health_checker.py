@@ -92,9 +92,9 @@ def load_hosts() -> dict:
         with open("config.json", "r") as file:
             config = json.load(file)
 
-        addresses = config["hosts"]
+        hosts = config["hosts"]
 
-        if not isinstance(addresses, dict):
+        if not isinstance(hosts, dict):
             print("Error: hosts must be a dictionary.")
             raise SystemExit(1)
 
@@ -110,18 +110,18 @@ def load_hosts() -> dict:
         print("Error: config.json is missing the hosts section.")
         raise SystemExit(1)
 
-    if not addresses:
+    if not hosts:
         print("No hosts configured.")
         raise SystemExit(1)
 
-    return addresses
+    return hosts
 
 
 def main() -> None:
-    addresses = load_hosts()
+    hosts = load_hosts()
     host_statuses = {}
 
-    for name, address in addresses.items():
+    for name, address in hosts.items():
         reachable = is_reachable(address)
         status = "reachable" if reachable else "unreachable"
 
