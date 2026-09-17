@@ -64,25 +64,17 @@ if not addresses:
     print("No hosts configured.")
     raise SystemExit(1)
 
-reachable_addresses = 0
+
+host_statuses = {}
 
 for name, address in addresses.items():
     reachable = is_reachable(address)
     status = "reachable" if reachable else "unreachable"
 
+    host_statuses[name] = reachable
+
     print(f"{name} ({address}) is {status}")
     log_health_check(name, address, status)
-
-    if reachable:
-        reachable_addresses += 1
-
-unreachable_addresses = len(addresses) - reachable_addresses
-reachable_percentage = (reachable_addresses / len(addresses)) * 100
-
-if not unreachable_addresses:
-    overall_status = "HEALTHY"
-else:
-    overall_status = "DEGRADED"
 
 
 def get_unreachable_hosts(hosts: dict) -> list:
@@ -135,9 +127,17 @@ def format_health_summary(hosts: dict) -> str:
     )
 
 
+status_counts = get_status_counts(host_statuses)
+reachable_percentage = get_health_percentage(host_statuses)
+
 log_summary(
-    reachable_addresses, unreachable_addresses, len(addresses), reachable_percentage
+    status_counts["reachable"],
+    status_counts["unreachable"],
+    len(host_statuses),
+    reachable_percentage,
 )
 
-if unreachable_addresses > 0:
+print(format_health_summary(host_statuses))
+
+if has_failures(host_statuses):
     raise SystemExit(1)
