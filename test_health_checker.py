@@ -1,3 +1,6 @@
+import socket
+from unittest.mock import patch
+
 from health_checker import (
     get_status_counts,
     get_health_percentage,
@@ -5,6 +8,7 @@ from health_checker import (
     has_failures,
     get_reachable_hosts,
     get_unreachable_hosts,
+    resolve_hostname,
 )
 
 
@@ -107,3 +111,21 @@ def test_get_unreachable_hosts():
     result = get_unreachable_hosts(hosts)
 
     assert result == ["Test Host"]
+
+
+def test_resolve_hostname_success():
+    with patch("health_checker.socket.gethostbyname") as mock_gethostbyname:
+        mock_gethostbyname.return_value = "93.184.216.34"
+
+        result = resolve_hostname("example.com")
+
+        assert result == "93.184.216.34"
+
+
+def test_resolve_hostname_failure():
+    with patch("health_checker.socket.gethostbyname") as mock_gethostbyname:
+        mock_gethostbyname.side_effect = socket.gaierror
+
+        result = resolve_hostname("example.com")
+
+        assert result is None

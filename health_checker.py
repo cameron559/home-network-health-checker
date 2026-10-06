@@ -1,6 +1,14 @@
+import socket
 import subprocess
 import json
 from datetime import datetime
+
+
+def resolve_hostname(hostname: str) -> str | None:
+    try:
+        return socket.gethostbyname(hostname)
+    except socket.gaierror:
+        return None
 
 
 def is_reachable(address: str) -> bool:
@@ -117,7 +125,7 @@ def load_hosts() -> dict:
     return hosts
 
 
-def main() -> None:
+def run_overview() -> None:
     hosts = load_hosts()
     host_statuses = {}
 
@@ -151,8 +159,78 @@ def main() -> None:
     if reachable_hosts:
         print(f"Reachable hosts: {', '.join(reachable_hosts)}")
 
-    if has_failures(host_statuses):
-        raise SystemExit(1)
+
+def run_dns_test() -> None:
+    hostname = "example.com"
+
+    print("\nDNS Resolution Test")
+    print("===================")
+
+    ip_address = resolve_hostname(hostname)
+
+    if ip_address:
+        print(f"[PASS] {hostname} resolved to {ip_address}")
+    else:
+        print(f"[FAIL] Could not resolve {hostname}")
+
+
+def show_menu() -> None:
+    print("\nHome Network Health Checker")
+    print("===========================")
+    print("1) Overview")
+    print("2) Tests")
+    print("3) Exit")
+
+
+def show_tests_menu() -> None:
+    print("\nDiagnostic Tests")
+    print("================")
+    print("1) Internet Connectivity")
+    print("2) DNS Resolution")
+    print("3) Configured Hosts")
+    print("4) Back")
+
+
+def run_tests_menu() -> None:
+    while True:
+        show_tests_menu()
+
+        choice = input("\nChoose a test: ")
+
+        if choice == "1":
+            print("Internet connectivity test coming soon.")
+
+        elif choice == "2":
+            run_dns_test()
+
+        elif choice == "3":
+            print("Configured hosts test coming soon.")
+
+        elif choice == "4":
+            break
+
+        else:
+            print("Invalid option. Please choose 1, 2, 3, or 4.")
+
+
+def main() -> None:
+    while True:
+        show_menu()
+
+        choice = input("\nChoose an option: ")
+
+        if choice == "1":
+            run_overview()
+
+        elif choice == "2":
+            run_tests_menu()
+
+        elif choice == "3":
+            print("Goodbye.")
+            break
+
+        else:
+            print("Invalid option. Please choose 1, 2, or 3.")
 
 
 if __name__ == "__main__":
