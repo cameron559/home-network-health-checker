@@ -160,6 +160,31 @@ def run_overview() -> None:
         print(f"Reachable hosts: {', '.join(reachable_hosts)}")
 
 
+def run_internet_test() -> None:
+    address = "1.1.1.1"
+
+    print("\nInternet Connectivity Test")
+    print("==========================")
+
+    if is_reachable(address):
+        print(f"[PASS] Internet connectivity available via {address}")
+    else:
+        print(f"[FAIL] Could not reach {address}")
+
+
+def run_configured_hosts_test() -> None:
+    hosts = load_hosts()
+
+    print("\nConfigured Hosts Test")
+    print("=====================")
+
+    for name, address in hosts.items():
+        if is_reachable(address):
+            print(f"[PASS] {name} ({address}) is reachable")
+        else:
+            print(f"[FAIL] {name} ({address}) is unreachable")
+
+
 def run_dns_test() -> None:
     hostname = "example.com"
 
@@ -172,6 +197,15 @@ def run_dns_test() -> None:
         print(f"[PASS] {hostname} resolved to {ip_address}")
     else:
         print(f"[FAIL] Could not resolve {hostname}")
+
+
+def run_all_diagnostics() -> None:
+    print("\nRunning All Diagnostics")
+    print("=======================")
+
+    run_internet_test()
+    run_dns_test()
+    run_configured_hosts_test()
 
 
 def show_menu() -> None:
@@ -188,7 +222,8 @@ def show_tests_menu() -> None:
     print("1) Internet Connectivity")
     print("2) DNS Resolution")
     print("3) Configured Hosts")
-    print("4) Back")
+    print("4) Run All Diagnostics")
+    print("5) Back")
 
 
 def run_tests_menu() -> None:
@@ -198,19 +233,21 @@ def run_tests_menu() -> None:
         choice = input("\nChoose a test: ")
 
         if choice == "1":
-            print("Internet connectivity test coming soon.")
-
+            run_internet_test()
         elif choice == "2":
             run_dns_test()
 
         elif choice == "3":
-            print("Configured hosts test coming soon.")
+            run_configured_hosts_test()
 
         elif choice == "4":
+            run_all_diagnostics()
+
+        elif choice == "5":
             break
 
         else:
-            print("Invalid option. Please choose 1, 2, 3, or 4.")
+            print("Invalid option. Please choose 1, 2, 3, 4 or 5.")
 
 
 def main() -> None:
