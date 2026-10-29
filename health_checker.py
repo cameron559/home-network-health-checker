@@ -100,6 +100,10 @@ def load_hosts() -> dict:
         with open("config.json", "r") as file:
             config = json.load(file)
 
+        if not isinstance(config, dict):
+            print("Error: config.json must contain a JSON object.")
+            raise SystemExit(1)
+
         hosts = config["hosts"]
 
         if not isinstance(hosts, dict):
@@ -121,6 +125,14 @@ def load_hosts() -> dict:
     if not hosts:
         print("No hosts configured.")
         raise SystemExit(1)
+
+    for name, address in hosts.items():
+        if not isinstance(address, str) or not address.strip():
+            print(
+                f"Error: address for host {name!r} must be a nonempty string "
+                "containing non-whitespace characters."
+            )
+            raise SystemExit(1)
 
     return hosts
 

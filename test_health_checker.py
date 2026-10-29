@@ -1,5 +1,8 @@
+import json
 import socket
 from unittest.mock import patch
+
+import pytest
 
 from health_checker import (
     get_status_counts,
@@ -9,6 +12,7 @@ from health_checker import (
     get_reachable_hosts,
     get_unreachable_hosts,
     resolve_hostname,
+    load_hosts,
 )
 
 
@@ -129,3 +133,65 @@ def test_resolve_hostname_failure():
         result = resolve_hostname("example.com")
 
         assert result is None
+
+
+@pytest.mark.parametrize(
+    "config, message",
+    [
+        ([], "must contain a JSON object"),
+        (None, "must contain a JSON object"),
+        ("text", "must contain a JSON object"),
+        (123, "must contain a JSON object"),
+        (True, "must contain a JSON object"),
+        ({}, "missing the hosts section"),
+        ({"hosts": []}, "hosts must be a dictionary"),
+        ({"hosts": None}, "hosts must be a dictionary"),
+        ({"hosts": "router"}, "hosts must be a dictionary"),
+        ({"hosts": 123}, "hosts must be a dictionary"),
+        ({"hosts": True}, "hosts must be a dictionary"),
+        ({"hosts": {}}, "No hosts configured"),
+    ],
+)
+def test_load_hosts_invalid_structure(config, message, tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "config.json").write_text(json.dumps(config), encoding="utf-8")
+
+    with pytest.raises(SystemExit) as error:
+        load_hosts()
+
+    assert error.value.code == 1
+    assert message in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("address", [None, 123, True, [], {}, "", " \t\n"])
+def test_load_hosts_invalid_address(address, tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    config = {"hosts": {"Valid": "192.168.0.1", "Invalid": address}}
+    (tmp_path / "config.json").write_text(json.dumps(config), encoding="utf-8")
+
+    with pytest.raises(SystemExit) as error:
+        load_hosts()
+
+    assert error.value.code == 1
+    output = capsys.readouterr().out
+    assert "host 'Invalid'" in output
+    assert "nonempty string containing non-whitespace characters" in output
+
+
+def test_load_hosts_valid_configuration(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    hosts = {"Router": "192.168.0.1", "DNS": "example.com", "Padded": " example.com "}
+    (tmp_path / "config.json").write_text(json.dumps({"hosts": hosts}), encoding="utf-8")
+
+    assert load_hosts() == hosts
+
+
+def test_load_hosts_invalid_json(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "config.json").write_text('{"hosts":', encoding="utf-8")
+
+    with pytest.raises(SystemExit) as error:
+        load_hosts()
+
+    assert error.value.code == 1
+    assert "contains invalid JSON" in capsys.readouterr().out
